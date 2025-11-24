@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokedex Nacional HTML</title>
+    
+    <!-- Tailwind CSS (Estilos modernos) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons (Iconos) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Fuente Inter (Google Fonts) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Animaciones personalizadas */
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(-5%); }
+            50% { transform: translateY(5%); }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 3s infinite ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        /* Ocultar scrollbar pero permitir scroll */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 selection:bg-red-100 min-h-screen flex flex-col">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <!-- Icono Pokeball CSS Puro -->
+                <div class="w-10 h-10 bg-gradient-to-b from-red-500 to-red-600 rounded-full border-4 border-slate-800 relative overflow-hidden shadow-sm flex items-center justify-center">
+                    <div class="absolute top-1/2 w-full h-1 bg-slate-800 -translate-y-1/2"></div>
+                    <div class="w-3 h-3 bg-white rounded-full border-2 border-slate-800 z-10 relative"></div>
+                    <div class="absolute bottom-0 w-full h-1/2 bg-white"></div>
+                </div>
+                <h1 class="text-2xl font-extrabold tracking-tight text-slate-800">
+                    Pokedex <span class="text-red-500">HTML</span>
+                </h1>
+            </div>
+
+            <!-- Buscador Desktop -->
+            <div class="relative hidden sm:block w-96">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                <input 
+                    type="text" 
+                    id="searchInputDesktop"
+                    placeholder="Buscar Pokémon..." 
+                    class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-full focus:ring-2 focus:ring-red-500 focus:bg-white transition outline-none text-slate-700"
+                >
+            </div>
+        </div>
+    </header>
+
+    <!-- Buscador Móvil -->
+    <div class="sm:hidden p-4 bg-white border-b border-slate-200">
+        <div class="relative">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+            <input 
+                type="text" 
+                id="searchInputMobile"
+                placeholder="Buscar Pokémon..." 
+                class="w-full pl-10 pr-4 py-3 bg-slate-100 rounded-xl focus:ring-2 focus:ring-red-500 outline-none w-full"
+            >
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+        
+        <!-- Loading State -->
+        <div id="loadingState" class="flex flex-col items-center justify-center py-32">
+            <div class="w-16 h-16 border-4 border-slate-200 border-t-red-500 rounded-full animate-spin"></div>
+            <p class="mt-4 text-slate-500 font-medium animate-pulse">Atrapando Pokémons...</p>
+        </div>
+
+        <!-- Content Grid (Oculto al inicio) -->
+        <div id="contentArea" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Columna Izquierda: Lista -->
+            <div class="lg:col-span-8 order-2 lg:order-1">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-slate-700">
+                        Resultados <span id="countBadge" class="text-slate-400 font-normal">(0)</span>
+                    </h2>
+                </div>
+                
+                <!-- Grid de Tarjetas -->
+                <div id="pokemonGrid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                    <!-- Las tarjetas se inyectan aquí con JS -->
+                </div>
+
+                <!-- Estado Vacío (No resultados) -->
+                <div id="emptyState" class="hidden text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-200 mt-4">
+                    <p class="text-slate-400 text-lg">No se encontraron Pokémons con ese nombre.</p>
+                    <button onclick="resetSearch()" class="mt-4 text-red-500 font-medium hover:underline cursor-pointer">
+                        Ver todos
+                    </button>
+                </div>
+
+                <!-- Sección Integrantes -->
+                <div class="mt-8 bg-slate-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-3 bg-white/10 rounded-full">
+                                <i data-lucide="users" class="text-yellow-400 w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg">Equipo de Desarrollo</h3>
+                                <p class="text-slate-400 text-sm">Proyecto Pokedex HTML</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap justify-center gap-2" id="teamMembers">
+                            <!-- Nombres aquí -->
+                            <span class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition cursor-default border border-white/5">Tu Nombre Aquí</span>
+                            <span class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition cursor-default border border-white/5">Integrante 2</span>
+                            <span class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition cursor-default border border-white/5">Integrante 3</span>
+                        </div>
+                    </div>
+                    <!-- Decoración fondo -->
+                    <div class="absolute -right-10 -bottom-20 w-64 h-64 bg-yellow-400 rounded-full mix-blend-overlay opacity-10 blur-3xl"></div>
+                    <div class="absolute -left-10 -top-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-overlay opacity-10 blur-3xl"></div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Detalle Sticky (Desktop) -->
+            <div class="hidden lg:block lg:col-span-4 sticky top-24 order-1 lg:order-2 h-fit" id="desktopDetailContainer">
+                <!-- Placeholder inicial -->
+                <div id="desktopPlaceholder" class="flex h-full items-center justify-center text-slate-400 bg-white rounded-3xl border-2 border-dashed border-slate-200 p-10 min-h-[400px]">
+                    <div class="text-center">
+                        <i data-lucide="zap" class="mx-auto mb-4 opacity-50 w-12 h-12"></i>
+                        <p>Selecciona un Pokémon para ver sus detalles</p>
+                    </div>
+                </div>
+                <!-- El contenido del detalle se inyectará aquí -->
+                <div id="desktopDetailContent"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Móvil (Overlay) -->
+    <div id="mobileModal" class="hidden lg:hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+        <div class="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-3xl scrollbar-hide bg-transparent relative" id="mobileModalContent">
+            <!-- El contenido del detalle se inyectará aquí -->
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- CONFIGURACIÓN ---
+        const typeColors = {
+            normal: 'bg-gray-400', fire: 'bg-orange-500', water: 'bg-blue-500',
+            electric: 'bg-yellow-400', grass: 'bg-green-500', ice: 'bg-cyan-300',
+            fighting: 'bg-red-700', poison: 'bg-purple-500', ground: 'bg-yellow-700',
+            flying: 'bg-indigo-300', psychic: 'bg-pink-500', bug: 'bg-lime-500',
+            rock: 'bg-yellow-800', ghost: 'bg-purple-800', dragon: 'bg-indigo-600',
+            steel: 'bg-gray-500', fairy: 'bg-pink-300'
+        };
+
+        let allPokemons = [];
+        let filteredPokemons = [];
+
+        // --- FUNCIONES UTILITARIAS ---
+        const getTypeColor = (type) => typeColors[type] || 'bg-gray-400';
+        
+        // --- API FETCH ---
+        async function fetchPokemons() {
+            try {
+                // 1. Obtener lista (Gen 1)
+                const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
+                const data = await res.json();
+
+                // 2. Obtener detalles en paralelo
+                const promises = data.results.map(async (poke) => {
+                    const r = await fetch(poke.url);
+                    return r.json();
+                });
+
+                allPokemons = await Promise.all(promises);
+                filteredPokemons = allPokemons;
+                
+                // 3. Renderizar
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('contentArea').classList.remove('hidden');
+                renderGrid();
+                
+            } catch (error) {
+                console.error("Error cargando pokemons:", error);
+                alert("Error cargando los datos. Revisa tu conexión.");
+            }
+        }
+
+        // --- RENDERIZADO ---
+        
+        function renderGrid() {
+            const grid = document.getElementById('pokemonGrid');
+            const badge = document.getElementById('countBadge');
+            const emptyState = document.getElementById('emptyState');
+
+            grid.innerHTML = '';
+            badge.innerText = `(${filteredPokemons.length})`;
+
+            if (filteredPokemons.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                
+                filteredPokemons.forEach(poke => {
+                    const mainType = poke.types[0].type.name;
+                    const color = getTypeColor(mainType);
+                    
+                    const card = document.createElement('div');
+                    card.className = `group relative bg-white rounded-2xl p-4 cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-100 overflow-hidden animate-fadeIn`;
+                    card.onclick = () => showDetail(poke);
+                    
+                    card.innerHTML = `
+                        <div class="absolute top-0 right-0 w-24 h-24 ${color} opacity-10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150 duration-500"></div>
+                        <div class="relative z-10 flex flex-col items-center">
+                            <span class="self-start text-slate-400 font-bold text-xs">#${String(poke.id).padStart(3, '0')}</span>
+                            <img src="${poke.sprites.other.home.front_default}" alt="${poke.name}" class="w-32 h-32 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300">
+                            <h3 class="mt-2 text-lg font-bold capitalize text-slate-800">${poke.name}</h3>
+                            <div class="flex gap-2 mt-2">
+                                ${poke.types.map(t => `<span class="${getTypeColor(t.type.name)} text-white text-xs font-bold px-3 py-1 rounded-full capitalize shadow-sm">${t.type.name}</span>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+            // Reinicializar iconos si se usaran dentro de las cartas
+            lucide.createIcons();
+        }
+
+        function buildDetailHTML(pokemon, isMobile) {
+            const mainType = pokemon.types[0].type.name;
+            const color = getTypeColor(mainType);
+            const closeBtn = isMobile ? `<button onclick="closeModal()" class="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/40 rounded-full backdrop-blur-sm transition text-white"><i data-lucide="x" class="w-5 h-5"></i></button>` : '';
+
+            return `
+                <div class="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden animate-fadeIn w-full">
+                    <!-- Cabecera -->
+                    <div class="${color} p-6 relative text-white">
+                        ${closeBtn}
+                        <h2 class="text-3xl font-bold capitalize tracking-wide">${pokemon.name}</h2>
+                        <span class="font-mono opacity-80 text-lg">#${String(pokemon.id).padStart(3, '0')}</span>
+                        <div class="flex justify-center my-6">
+                            <img src="${pokemon.sprites.other.home.front_default}" alt="${pokemon.name}" class="w-56 h-56 object-contain drop-shadow-2xl animate-bounce-slow">
+                        </div>
+                    </div>
+
+                    <!-- Cuerpo -->
+                    <div class="p-6 -mt-6 bg-white rounded-t-3xl relative z-10">
+                        <!-- Tipos -->
+                        <div class="flex justify-center gap-3 mb-6">
+                            ${pokemon.types.map(t => `<span class="${getTypeColor(t.type.name)} text-white text-xs font-bold px-3 py-1 rounded-full capitalize shadow-sm">${t.type.name}</span>`).join('')}
+                        </div>
+
+                        <!-- Stats Físicos Grid -->
+                        <div class="grid grid-cols-3 gap-4 mb-8">
+                            <div class="text-center p-3 bg-slate-50 rounded-xl">
+                                <div class="flex justify-center mb-1 text-slate-400"><i data-lucide="ruler" class="w-5 h-5"></i></div>
+                                <p class="text-sm text-slate-500">Altura</p>
+                                <p class="font-bold text-slate-800">${pokemon.height / 10} m</p>
+                            </div>
+                            <div class="text-center p-3 bg-slate-50 rounded-xl">
+                                <div class="flex justify-center mb-1 text-slate-400"><i data-lucide="weight" class="w-5 h-5"></i></div>
+                                <p class="text-sm text-slate-500">Peso</p>
+                                <p class="font-bold text-slate-800">${pokemon.weight / 10} kg</p>
+                            </div>
+                            <div class="text-center p-3 bg-slate-50 rounded-xl">
+                                <div class="flex justify-center mb-1 text-slate-400"><i data-lucide="activity" class="w-5 h-5"></i></div>
+                                <p class="text-sm text-slate-500">Exp</p>
+                                <p class="font-bold text-slate-800">${pokemon.base_experience}</p>
+                            </div>
+                        </div>
+
+                        <!-- Habilidades -->
+                        <div class="mb-6">
+                            <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Habilidades</h4>
+                            <div class="flex flex-wrap gap-2">
+                                ${pokemon.abilities.map(a => `<span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-sm capitalize border border-slate-200">${a.ability.name}</span>`).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Stats Base (Barras) -->
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Estadísticas Base</h4>
+                            <div class="space-y-3">
+                                ${pokemon.stats.map(s => `
+                                    <div class="flex items-center text-sm">
+                                        <span class="w-24 capitalize text-slate-600 font-medium truncate">${s.stat.name.replace('-', ' ')}</span>
+                                        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden mx-2">
+                                            <div class="h-full ${color} opacity-80" style="width: ${Math.min(s.base_stat, 100)}%"></div>
+                                        </div>
+                                        <span class="w-8 text-right font-bold text-slate-700">${s.base_stat}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showDetail(pokemon) {
+            const isMobile = window.innerWidth < 1024;
+            const html = buildDetailHTML(pokemon, isMobile);
+
+            if (isMobile) {
+                // Modo Mobile: Mostrar Modal
+                document.getElementById('mobileModalContent').innerHTML = html;
+                document.getElementById('mobileModal').classList.remove('hidden');
+                // Bloquear scroll del body
+                document.body.style.overflow = 'hidden';
+            } else {
+                // Modo Desktop: Mostrar Sidebar
+                document.getElementById('desktopPlaceholder').classList.add('hidden');
+                const container = document.getElementById('desktopDetailContent');
+                container.innerHTML = html;
+                container.classList.remove('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            document.getElementById('mobileModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // --- EVENTOS DE BÚSQUEDA ---
+        
+        function handleSearch(e) {
+            const term = e.target.value.toLowerCase();
+            filteredPokemons = allPokemons.filter(p => p.name.toLowerCase().includes(term));
+            
+            // Sincronizar inputs (mobile y desktop)
+            document.getElementById('searchInputDesktop').value = term;
+            document.getElementById('searchInputMobile').value = term;
+            
+            renderGrid();
+        }
+
+        function resetSearch() {
+            document.getElementById('searchInputDesktop').value = '';
+            document.getElementById('searchInputMobile').value = '';
+            filteredPokemons = allPokemons;
+            renderGrid();
+        }
+
+        // --- INICIALIZACIÓN ---
+        
+        window.onload = () => {
+            fetchPokemons();
+            lucide.createIcons();
+
+            // Listeners
+            document.getElementById('searchInputDesktop').addEventListener('input', handleSearch);
+            document.getElementById('searchInputMobile').addEventListener('input', handleSearch);
+            
+            // Cerrar modal al hacer click fuera
+            document.getElementById('mobileModal').addEventListener('click', (e) => {
+                if(e.target.id === 'mobileModal') closeModal();
+            });
+        };
+
+    </script>
+</body>
+</html>
